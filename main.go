@@ -15,7 +15,8 @@ func main() {
 	serverPort := "8080"
 	router := http.NewServeMux()
 	router.HandleFunc("GET /", handleHome)
-	router.HandleFunc("GET /otp", sendOtp)
+	router.HandleFunc("POST /otp", sendOtp)
+	router.HandleFunc("POST /otp/{id}", checkOtp)
 	server := http.Server{
 		Addr:    fmt.Sprint(":", serverPort),
 		Handler: router,
