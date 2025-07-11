@@ -5,15 +5,18 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/IDOMATH/CheetahMath/base_change"
 	"github.com/IDOMATH/session/memorystore"
+	"github.com/idomath/CheetahFarm/otp/mailer"
 )
 
 type Repository struct {
 	mStore *memorystore.MemoryStore
+	mail   *mailer.Mailer
 }
 
 func main() {
@@ -23,6 +26,7 @@ func main() {
 
 	memstore := memorystore.New()
 	repo := Repository{mStore: memstore}
+	repo.mail = setUpMailer()
 
 	router.HandleFunc("GET /", handleHome)
 	router.HandleFunc("POST /otp", repo.sendOtp)
@@ -35,6 +39,24 @@ func main() {
 	log.Fatal(server.ListenAndServe())
 }
 
+func setUpMailer() *mailer.Mailer {
+
+	from := os.Getenv("EMAIL")
+	if from == "" {
+		log.Fatal("error getting EMAIL from env")
+	}
+
+	password := os.Getenv("PASSWORD")
+	if password == "" {
+		log.Fatal("error geting PASSWORD from env")
+	}
+
+	smtpHost := "smtp.gmail.com"
+	smtpPort := "587"
+
+	return mailer.NewMailer(smtpHost, smtpPort, from, password)
+}
+
 func handleHome(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Hello world!"))
 }
@@ -45,12 +67,17 @@ func (repo *Repository) sendOtp(w http.ResponseWriter, r *http.Request) {
 	// send email
 	pass := MakeOtp(8)
 	w.Write([]byte(pass))
+	err := repo.mail.SendEmail(r.PostFormValue("email"), fmt.Sprintf("Your OTP is: %s", pass))
+	if err != nil {
+		fmt.Println("error sending email: ", err)
+		return
+	}
 	repo.mStore.Insert("001", []byte(pass), time.Now().Add(time.Hour))
 }
 
 func MakeOtp(len int) string {
 	otp := strings.Builder{}
-	r := rand.New(rand.NewSource(99))
+	r := rand.New(rand.NewSource(time.Now().UnixMicro()))
 	for i := 0; i < len; i++ {
 		otp.Write([]byte(base_change.FromTen(36, r.Int63n(36))))
 	}
