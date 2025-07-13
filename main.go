@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/IDOMATH/CheetahMath/base_change"
+	"github.com/IDOMATH/CheetahUtil/env"
 	"github.com/IDOMATH/session/memorystore"
 	"github.com/idomath/CheetahFarm/otp/mailer"
 )
@@ -21,7 +22,7 @@ type Repository struct {
 
 func main() {
 	fmt.Println("Hello world!")
-	serverPort := "8080"
+	serverPort := env.GetEnvValueOrDefault("PORT", ":8080")
 	router := http.NewServeMux()
 
 	memstore := memorystore.New()
