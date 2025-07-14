@@ -5,7 +5,6 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
@@ -42,12 +41,12 @@ func main() {
 
 func setUpMailer() *mailer.Mailer {
 
-	from := os.Getenv("EMAIL")
+	from := env.GetEnvValue("EMAIL")
 	if from == "" {
 		log.Fatal("error getting EMAIL from env")
 	}
 
-	password := os.Getenv("PASSWORD")
+	password := env.GetEnvValue("PASSWORD")
 	if password == "" {
 		log.Fatal("error geting PASSWORD from env")
 	}
