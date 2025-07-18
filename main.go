@@ -15,7 +15,7 @@ import (
 )
 
 type Repository struct {
-	mStore *memorystore.MemoryStore
+	mStore *memorystore.MemoryStore[string]
 	mail   *mailer.Mailer
 }
 
@@ -24,7 +24,7 @@ func main() {
 	serverPort := env.GetEnvValueOrDefault("PORT", ":8080")
 	router := http.NewServeMux()
 
-	memstore := memorystore.New()
+	memstore := memorystore.New[string]()
 	repo := Repository{mStore: memstore}
 	repo.mail = setUpMailer()
 
@@ -72,7 +72,7 @@ func (repo *Repository) sendOtp(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("error sending email: ", err)
 		return
 	}
-	repo.mStore.Insert("001", []byte(pass), time.Now().Add(time.Hour))
+	repo.mStore.Insert("001", pass, time.Now().Add(time.Hour))
 }
 
 func MakeOtp(len int) string {
