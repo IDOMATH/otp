@@ -89,8 +89,11 @@ func (repo *Repository) checkOtp(w http.ResponseWriter, r *http.Request) {
 	passIn := r.PostFormValue("pass")
 	storedPass, _ := repo.mStore.Get(r.PathValue("id"))
 	if passIn == string(storedPass) {
+		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OTP good"))
+		repo.mStore.Delete(r.PathValue("id"))
 		return
 	}
+	w.WriteHeader(http.StatusForbidden)
 	w.Write([]byte("OTP not match"))
 }
