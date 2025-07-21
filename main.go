@@ -5,6 +5,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -17,6 +18,7 @@ import (
 type Repository struct {
 	mStore *memorystore.MemoryStore[string]
 	mail   *mailer.Mailer
+	count  int
 }
 
 func main() {
@@ -72,13 +74,16 @@ func (repo *Repository) sendOtp(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("error sending email: ", err)
 		return
 	}
-	repo.mStore.Insert("001", pass, time.Now().Add(time.Hour))
+	count := strconv.Itoa(repo.count)
+	repo.count = repo.count + 1
+	repo.mStore.Insert(count, pass, time.Now().Add(time.Hour))
+	w.Write([]byte("id: " + count))
 }
 
 func MakeOtp(len int) string {
 	otp := strings.Builder{}
 	r := rand.New(rand.NewSource(time.Now().UnixMicro()))
-	for i := 0; i < len; i++ {
+	for range len {
 		otp.Write([]byte(base_change.FromTen(36, r.Int63n(36))))
 	}
 	return otp.String()
