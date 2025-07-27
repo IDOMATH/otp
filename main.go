@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/IDOMATH/otp/db"
+
 	"github.com/IDOMATH/CheetahMath/base_change"
 	"github.com/IDOMATH/CheetahUtil/env"
 	"github.com/IDOMATH/session/memorystore"
@@ -39,6 +41,24 @@ func main() {
 	}
 
 	log.Fatal(server.ListenAndServe())
+}
+
+func setupDbConnection() *db.DB {
+	dbHost := env.GetEnvValueOrDefault("DBHOST", "localhost")
+	dbPort := env.GetEnvValueOrDefault("DBPORT", "5432")
+	dbName := env.GetEnvValueOrDefault("DBNAME", "tournament-finder")
+	dbUser := env.GetEnvValueOrDefault("DBUSER", "postgres")
+	dbPass := env.GetEnvValueOrDefault("DBPASS", "postgres")
+	dbSsl := env.GetEnvValueOrDefault("DBSSL", "disable")
+
+	connectionString := fmt.Sprintf("host=%s port=%s dbname=%s user=%s password=%s sslmode=%s", dbHost, dbPort, dbName, dbUser, dbPass, dbSsl)
+	fmt.Println("Connecting to Postgres")
+	postgresDb, err := db.ConnectSql(connectionString)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("Connected to Postgres")
+	return postgresDb
 }
 
 func setUpMailer() *mailer.Mailer {
