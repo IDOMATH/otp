@@ -14,13 +14,15 @@ import (
 	"github.com/IDOMATH/CheetahMath/base_change"
 	"github.com/IDOMATH/CheetahUtil/env"
 	"github.com/IDOMATH/session/memorystore"
+	"github.com/idomath/CheetahFarm/otp/db"
 	"github.com/idomath/CheetahFarm/otp/mailer"
 )
 
 type Repository struct {
-	mStore *memorystore.MemoryStore[string]
-	mail   *mailer.Mailer
-	count  int
+	mStore   *memorystore.MemoryStore[string]
+	otpStore *db.DB
+	mail     *mailer.Mailer
+	count    int
 }
 
 func main() {
@@ -31,6 +33,8 @@ func main() {
 	memstore := memorystore.New[string]()
 	repo := Repository{mStore: memstore}
 	repo.mail = setUpMailer()
+
+	repo.otpStore = setupDbConnection()
 
 	router.HandleFunc("GET /", handleHome)
 	router.HandleFunc("POST /otp", repo.sendOtp)
