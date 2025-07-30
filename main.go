@@ -20,7 +20,7 @@ import (
 
 type Repository struct {
 	mStore   *memorystore.MemoryStore[string]
-	otpStore *db.DB
+	otpStore db.OtpStore
 	mail     *mailer.Mailer
 	count    int
 }
@@ -34,7 +34,7 @@ func main() {
 	repo := Repository{mStore: memstore}
 	repo.mail = setUpMailer()
 
-	repo.otpStore = setupDbConnection()
+	repo.otpStore = db.NewOtpStore(setupDbConnection())
 
 	router.HandleFunc("GET /", handleHome)
 	router.HandleFunc("POST /otp", repo.sendOtp)
