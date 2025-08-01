@@ -20,7 +20,7 @@ func (s *OtpStore) InsertOtp(otp string) int {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 	defer cancel()
 
-	statement := `INSERT INTO otp (password) values ($1)`
+	statement := `INSERT INTO otp (password) values ($1) RETURNING id`
 
 	return 0
 }
