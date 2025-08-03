@@ -24,5 +24,9 @@ func (s *OtpStore) InsertOtp(otp string) int {
 
 	row := s.Db.QueryRowContext(ctx, statement, otp)
 
+	if row {
+
+	}
+
 	return 0
 }
