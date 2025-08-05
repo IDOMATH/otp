@@ -5,24 +5,21 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/IDOMATH/otp/db"
+	"github.com/IDOMATH/otp/mailer"
 
 	"github.com/IDOMATH/CheetahMath/base_change"
 	"github.com/IDOMATH/CheetahUtil/env"
 	"github.com/IDOMATH/session/memorystore"
-	"github.com/idomath/CheetahFarm/otp/db"
-	"github.com/idomath/CheetahFarm/otp/mailer"
 )
 
 type Repository struct {
-	mStore   *memorystore.MemoryStore[string]
-	otpStore db.OtpStore
-	mail     *mailer.Mailer
-	count    int
+	MemStore *memorystore.MemoryStore[string]
+	OtpStore db.OtpStore
+	Mail     *mailer.Mailer
 }
 
 func main() {
@@ -30,11 +27,11 @@ func main() {
 	serverPort := env.GetEnvValueOrDefault("PORT", ":8080")
 	router := http.NewServeMux()
 
-	memstore := memorystore.New[string]()
-	repo := Repository{mStore: memstore}
-	repo.mail = setUpMailer()
+	// Memstore := memorystore.New[string]()
+	repo := Repository{}
+	repo.Mail = setUpMailer()
 
-	repo.otpStore = db.NewOtpStore(setupDbConnection())
+	repo.OtpStore = db.NewOtpStore(setupDbConnection())
 
 	router.HandleFunc("GET /", handleHome)
 	router.HandleFunc("POST /otp", repo.sendOtp)
@@ -92,16 +89,15 @@ func (repo *Repository) sendOtp(w http.ResponseWriter, r *http.Request) {
 	// add otp and id to database
 	// send email
 	pass := MakeOtp(8)
-	w.Write([]byte(pass))
-	err := repo.mail.SendEmail(r.PostFormValue("email"), fmt.Sprintf("Your OTP is: %s", pass))
+	id := repo.OtpStore.InsertOtp(pass)
+	err := repo.Mail.SendEmail(r.PostFormValue("email"), fmt.Sprintf("Your OTP is: %s", pass))
 	if err != nil {
 		fmt.Println("error sending email: ", err)
 		return
 	}
-	count := strconv.Itoa(repo.count)
-	repo.count = repo.count + 1
-	repo.mStore.Insert(count, pass, time.Now().Add(time.Hour))
-	w.Write([]byte("id: " + count))
+	// Maybe a redirect to a page with a form and the ID.
+	// Like a GET /otp/{id}
+	w.Write([]byte(id))
 }
 
 func MakeOtp(len int) string {
@@ -116,11 +112,11 @@ func MakeOtp(len int) string {
 func (repo *Repository) checkOtp(w http.ResponseWriter, r *http.Request) {
 	// compare otp sent to one in database with corresponding id
 	passIn := r.PostFormValue("pass")
-	storedPass, _ := repo.mStore.Get(r.PathValue("id"))
+	storedPass, _ := repo.MemStore.Get(r.PathValue("id"))
 	if passIn == string(storedPass) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OTP good"))
-		repo.mStore.Delete(r.PathValue("id"))
+		repo.MemStore.Delete(r.PathValue("id"))
 		return
 	}
 	w.WriteHeader(http.StatusForbidden)
