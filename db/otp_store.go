@@ -37,3 +37,20 @@ func (s *OtpStore) InsertOtp(otp string) int {
 
 	return row.Id
 }
+
+func (s *OtpStore) GetOtp(id int) string {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+	defer cancel()
+
+	statement := `SELECT password FROM otp WHERE id = ($1)`
+
+	var pass string
+
+	err := s.Db.QueryRowContext(ctx, statement, id).Scan(&pass)
+
+	if err != nil {
+		return ""
+	}
+
+	return pass
+}
