@@ -112,10 +112,12 @@ func MakeOtp(len int) string {
 func (repo *Repository) checkOtp(w http.ResponseWriter, r *http.Request) {
 	// compare otp sent to one in database with corresponding id
 	passIn := r.PostFormValue("pass")
-	storedPass, _ := repo.MemStore.Get(r.PathValue("id"))
+	// storedPass, _ := repo.MemStore.Get(r.PathValue("id"))
+	storedPass := repo.OtpStore.Get(r.PathValue("id"))
 	if passIn == string(storedPass) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OTP good"))
+		// TODO : implement db delete
 		repo.MemStore.Delete(r.PathValue("id"))
 		return
 	}
