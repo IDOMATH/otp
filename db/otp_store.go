@@ -54,3 +54,13 @@ func (s *OtpStore) GetOtp(id int) string {
 
 	return pass
 }
+
+func (s *OtpStore) DeleteOtp(id string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+	defer cancel()
+
+	statement := `DELETE FROM otp WHERE id = ($1)`
+
+	_, err := s.Db.ExecContext(ctx, statement, id)
+	return err
+}
