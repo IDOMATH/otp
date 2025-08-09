@@ -118,7 +118,7 @@ func (repo *Repository) checkOtp(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OTP good"))
 		// TODO : implement db delete
-		repo.MemStore.Delete(r.PathValue("id"))
+		repo.OtpStore.DeleteOtp(r.PathValue("id"))
 		return
 	}
 	w.WriteHeader(http.StatusForbidden)
