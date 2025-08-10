@@ -85,9 +85,6 @@ func handleHome(w http.ResponseWriter, r *http.Request) {
 }
 
 func (repo *Repository) sendOtp(w http.ResponseWriter, r *http.Request) {
-	// find a way to make a unique id.  Something with the user email
-	// add otp and id to database
-	// send email
 	pass := MakeOtp(8)
 	id := repo.OtpStore.InsertOtp(pass)
 	err := repo.Mail.SendEmail(r.PostFormValue("email"), fmt.Sprintf("Your OTP is: %s", pass))
@@ -112,12 +109,9 @@ func MakeOtp(len int) string {
 func (repo *Repository) checkOtp(w http.ResponseWriter, r *http.Request) {
 	// compare otp sent to one in database with corresponding id
 	passIn := r.PostFormValue("pass")
-	// storedPass, _ := repo.MemStore.Get(r.PathValue("id"))
 	storedPass := repo.OtpStore.Get(r.PathValue("id"))
 	if passIn == string(storedPass) {
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("OTP good"))
-		// TODO : implement db delete
 		repo.OtpStore.DeleteOtp(r.PathValue("id"))
 		return
 	}
