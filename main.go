@@ -5,6 +5,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -18,7 +19,7 @@ import (
 
 type Repository struct {
 	MemStore *memorystore.MemoryStore[string]
-	OtpStore db.OtpStore
+	OtpStore *db.OtpStore
 	Mail     *mailer.Mailer
 }
 
@@ -31,7 +32,7 @@ func main() {
 	repo := Repository{}
 	repo.Mail = setUpMailer()
 
-	repo.OtpStore = db.NewOtpStore(setupDbConnection())
+	repo.OtpStore = db.NewOtpStore(setupDbConnection().SQL)
 
 	router.HandleFunc("GET /", handleHome)
 	router.HandleFunc("POST /otp", repo.sendOtp)
@@ -47,7 +48,7 @@ func main() {
 func setupDbConnection() *db.DB {
 	dbHost := env.GetEnvValueOrDefault("DBHOST", "localhost")
 	dbPort := env.GetEnvValueOrDefault("DBPORT", "5432")
-	dbName := env.GetEnvValueOrDefault("DBNAME", "tournament-finder")
+	dbName := env.GetEnvValueOrDefault("DBNAME", "one-time-password")
 	dbUser := env.GetEnvValueOrDefault("DBUSER", "postgres")
 	dbPass := env.GetEnvValueOrDefault("DBPASS", "postgres")
 	dbSsl := env.GetEnvValueOrDefault("DBSSL", "disable")
@@ -94,7 +95,7 @@ func (repo *Repository) sendOtp(w http.ResponseWriter, r *http.Request) {
 	}
 	// Maybe a redirect to a page with a form and the ID.
 	// Like a GET /otp/{id}
-	w.Write([]byte(id))
+	w.Write([]byte(strconv.Itoa(id)))
 }
 
 func MakeOtp(len int) string {
@@ -109,7 +110,14 @@ func MakeOtp(len int) string {
 func (repo *Repository) checkOtp(w http.ResponseWriter, r *http.Request) {
 	// compare otp sent to one in database with corresponding id
 	passIn := r.PostFormValue("pass")
-	storedPass := repo.OtpStore.Get(r.PathValue("id"))
+	id, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte("bad id"))
+		return
+	}
+
+	storedPass := repo.OtpStore.GetOtp(id)
 	if passIn == string(storedPass) {
 		w.WriteHeader(http.StatusOK)
 		repo.OtpStore.DeleteOtp(r.PathValue("id"))
