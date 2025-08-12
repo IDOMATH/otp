@@ -25,7 +25,7 @@ func (s *OtpStore) InsertOtp(otp string) int {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 	defer cancel()
 
-	statement := `INSERT INTO otp (password) values ($1) RETURNING id`
+	statement := `INSERT INTO otp (password, expires_at) values ($1, $2) RETURNING id`
 
 	var row OtpRow
 
@@ -63,4 +63,7 @@ func (s *OtpStore) DeleteOtp(id string) error {
 
 	_, err := s.Db.ExecContext(ctx, statement, id)
 	return err
+}
+func (s *OtpStore) CleanupExpired(expiredAt time.Time) error {
+	return nil
 }

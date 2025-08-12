@@ -28,7 +28,6 @@ func main() {
 	serverPort := env.GetEnvValueOrDefault("PORT", ":8080")
 	router := http.NewServeMux()
 
-	// Memstore := memorystore.New[string]()
 	repo := Repository{}
 	repo.Mail = setUpMailer()
 
