@@ -29,7 +29,7 @@ func (s *OtpStore) InsertOtp(otp string) int {
 
 	var row OtpRow
 
-	err := s.Db.QueryRowContext(ctx, statement, otp).Scan(&row)
+	err := s.Db.QueryRowContext(ctx, statement, otp, time.Now().Add(time.Hour).Unix()).Scan(&row)
 
 	if err != nil {
 		return 0
@@ -64,6 +64,11 @@ func (s *OtpStore) DeleteOtp(id string) error {
 	_, err := s.Db.ExecContext(ctx, statement, id)
 	return err
 }
-func (s *OtpStore) CleanupExpired(expiredAt time.Time) error {
-	return nil
+func (s *OtpStore) CleanupExpired() error {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
+	defer cancel()
+
+	statement := `DELETE FROM otp WHERE expires_at < ($1)`
+	_, err := s.Db.ExecContext(ctx, statement, time.Now().Unix())
+	return err
 }
