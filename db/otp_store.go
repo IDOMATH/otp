@@ -64,6 +64,7 @@ func (s *OtpStore) DeleteOtp(id string) error {
 	_, err := s.Db.ExecContext(ctx, statement, id)
 	return err
 }
+
 func (s *OtpStore) CleanupExpired() error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 	defer cancel()
@@ -71,4 +72,17 @@ func (s *OtpStore) CleanupExpired() error {
 	statement := `DELETE FROM otp WHERE expires_at < ($1)`
 	_, err := s.Db.ExecContext(ctx, statement, time.Now().Unix())
 	return err
+}
+
+func (s *OtpStore) StartCleanup(interval time.Duration) {
+	ticker := time.NewTicker(interval)
+	for {
+		_, ok := <-ticker.C
+		if !ok {
+			break
+		}
+
+		s.CleanupExpired()
+
+	}
 }
